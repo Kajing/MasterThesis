@@ -108,5 +108,27 @@ $ cd scripts
 Just like before we can download the main file using wget.
 
 ```
-wget 
+$ wget https://github.com/Kajing/MasterThesis/blob/main/AutonomeNavigatieMidas.py
+```
+
+## Installing necessary packages
+
+The rover uses many packages, the following packages can be installed in the following manner.
+
+### Numpy
+
+```
+$ pip install numpy
+```
+
+### Scipy
+
+```
+$ python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
+```
+
+### Filterpy
+
+```
+$ pip install filterpy
 ```
