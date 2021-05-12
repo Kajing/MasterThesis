@@ -515,7 +515,7 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
             afstand_tot_volgende_punt = afstand[0]-positionRover[0]
         elif(afstand[2] == "vooruit"):
             afstand_tot_volgende_punt = afstand[1]-positionRover[1]
-        elif(afstnad[2] == "achteruit"):
+        elif(afstand[2] == "achteruit"):
             afstand_tot_volgende_punt = positionRover[1]-afstand[1]
         
         einde_punt_bereikt = False
@@ -659,7 +659,7 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             afstand_tot_volgende_punt = afstand[0]-positionRover[0]
                         elif(afstand[2] == "vooruit"):
                             afstand_tot_volgende_punt = afstand[1]-positionRover[1]
-                        elif(afstnad[2] == "achteruit"):
+                        elif(afstand[2] == "achteruit"):
                             afstand_tot_volgende_punt = positionRover[1]-afstand[1]
                     if(afstand_i != len(listofNextNodes)-1):
                         if(listofNextNodes[afstand_i+1][2] == "links"):
