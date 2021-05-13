@@ -132,3 +132,26 @@ $ python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sym
 ```
 $ pip install filterpy
 ```
+
+### Click
+
+```
+$ pip install -U click
+```
+
+## Click
+The software uses click to read necessary files in. These files are a map of the area, the coordinates to drive to and an output file that will contain the map after the rover's finished.
+
+### The command line
+The command line to run the rover is as follows.
+
+```
+$ rosrun robot AutonomeNavigatieMidas.py -m maze.txt -c coordinates.txt -o output.txt
+```
+The different elements of the command line are:
++ *rosrun* can be compared to the python command to execute a python file.
++ *robot* is the directory that contains the file to be executed.
++ *AutonomeNavigatieMidas.py* is the file to be executed.
++ *-m maze.txt* to load the file of the map in. Note that the file should receive an absolute path. In this case, we are in the robot directory where the executable file resides and the 3 other text files mentioned in the command line.
++ *-c coordinates.txt* contains the coordinates of the rover to drive to.
++ *-o output.txt* contains the map of the area after the rover's finished with all experiments.
