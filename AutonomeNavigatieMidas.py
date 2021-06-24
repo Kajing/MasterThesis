@@ -26,6 +26,7 @@ import sys
 hedge = MarvelmindHedge(tty = "/dev/ttyACM0",baud=500000, adr=None, debug=False)  # create MarvelmindHedge thread
 hedge.start()
 
+k = 0
 
 brake = 0
 CW = 1
@@ -77,7 +78,7 @@ bus1.write_pin(en_motor_2, 1)
 bus1.write_pin(en_motor_3, 1)
 
 # was 245
-usSpeed = float(160)
+usSpeed = float(80)
 
 def stop():
     print('We stoppen')
@@ -89,11 +90,11 @@ def stop():
 
     usMotor_Status = brake
     
+    
     motorGo(1, usMotor_Status, 0)
-    motorGo(2, usMotor_Status, 0)
-
     motorGo(0, usMotor_Status, 0)
-    sleep(0.1)
+    motorGo(2, usMotor_Status, 0)
+    
 
 def achterwaards():
     print('achterwaarts')
@@ -118,16 +119,23 @@ def voorwaarts():
     print('voorwaarts')
     global usSpeed
     global usMotor_Status
+    global k
 
     bus1.write_pin(en_motor_1, 1)
     bus1.write_pin(en_motor_2, 1)
     bus1.write_pin(en_motor_3, 1)
 
-    usMotor_Status = CCW
-    motorGo(2, usMotor_Status, (usSpeed/8000)*100)
-    usMotor_Status = CW
-    motorGo(1, usMotor_Status, (usSpeed/8000)*100)
-    
+    if(k%2 == 0):
+        usMotor_Status = CW
+        motorGo(1, usMotor_Status, (1.75*usSpeed/8000)*100)
+        usMotor_Status = CCW
+        motorGo(2, usMotor_Status, (1.75*usSpeed/8000)*100)
+    elif(k%2 ==1):
+        usMotor_Status = CCW
+        motorGo(2, usMotor_Status, (1.75*usSpeed/8000)*100)
+        usMotor_Status = CW
+        motorGo(1, usMotor_Status, (1.75*usSpeed/8000)*100)
+    k += 1
     #disable 3rd motor
     usMotor_Status = brake
     motorGo(0, usMotor_Status, 0)
@@ -145,12 +153,12 @@ def links():
     #(usSpeed*1.86478437)
     
     usMotor_Status = CCW
-    motorGo(0, usMotor_Status, (usSpeed*19/8000)*100)
+    motorGo(0, usMotor_Status, (usSpeed*70/16000)*100)
     usMotor_Status = CW
-    motorGo(2, usMotor_Status, (usSpeed/8000)*100)
+    motorGo(2, usMotor_Status, (usSpeed/16000)*100)
     
     usMotor_Status = CW
-    motorGo(1, usMotor_Status, (usSpeed/8000)*100)
+    motorGo(1, usMotor_Status, (usSpeed/16000)*100)
 
 def rechts():   
     print('rechts')
@@ -162,12 +170,12 @@ def rechts():
     bus1.write_pin(en_motor_3, 1)
 
     usMotor_Status = CW
-    motorGo(0, usMotor_Status, (usSpeed*19/8000)*100)
+    motorGo(0, usMotor_Status, (usSpeed*70/16000)*100)
     usMotor_Status = CCW
-    motorGo(2, usMotor_Status, (usSpeed/8000)*100)
+    motorGo(2, usMotor_Status, (usSpeed/16000)*100)
     
     usMotor_Status = CCW
-    motorGo(1, usMotor_Status, (usSpeed/8000)*100)
+    motorGo(1, usMotor_Status, (usSpeed/16000)*100)
 
 
 def versnel():
@@ -398,27 +406,6 @@ class Node:
     # Print node
     def __repr__(self):
         return ('({0},{1})'.format(self.position, self.f))
-# Draw a grid
-'''
-def draw_grid(map, width, height, spacing=2, **kwargs):
-    for y in range(height):
-        for x in range(width):
-            print('%%-%ds' % spacing % draw_tile(map, (x, y), kwargs), end='')
-        print()
-'''
-# Draw a tile
-def draw_tile(map, position, kwargs):
-
-    # Get the map value
-    value = map.get(position)
-    # Check if we should print the path
-    if 'path' in kwargs and position in kwargs['path']: value = '+'
-    # Check if we should print start point
-    if 'start' in kwargs and position == kwargs['start']: value = '@'
-    # Check if we should print the goal point
-    if 'goal' in kwargs and position == kwargs['goal']: value = '$'
-    # Return a tile value
-    return value 
 # A* search
 def astar_search(map, start, end):
 
@@ -550,7 +537,7 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
         distance = pulse_duration * 17900
         distance = round(distance, 1)
 
-        if(distance > 30):
+        if(distance > 15):
             if(afstand[2] == "links"):
                 links()
             elif(afstand[2] == "rechts"):
@@ -565,6 +552,7 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
 
         #begin met rijden
         i = 0
+        closest_distance = 500
         while(not einde_punt_bereikt):
             #check om de 0.5s
             if (time.time() - t0 > 0.2):
@@ -585,7 +573,7 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
 
                 print("sensor dist", distance)
 
-                if (distance <= 20 and aan_het_rijden == True):
+                if (distance <= 50 and aan_het_rijden == True):
                     stop()
                     aan_het_rijden = False
                     print(distance)
@@ -594,27 +582,27 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                         #op de map wordt in de x richting alles gemarkeerd op x pos -40 cm tot x pos + 50cm
                         for x in range(int(round((positionRover[0]+0.035)*10, 0)-4), int(round((positionRover[0]+0.035)*10, 0)+5)):
                             #op de map wordt in de y richting alles gemarkeerd van y pos +10 tot y positie + 60 cm
-                            for y in range(int(math.floor(positionRover[1]*10)+1), int(math.floor(positionRover[1]*10)+6)):
+                            for y in range(int(math.floor(positionRover[1]*10)+1), int(math.floor(positionRover[1]*10)+9)):
                                 map[(x, y)] = "#"
                         return 2, map
                     elif(afstand[2] == "achteruit"):
                         for x in range(int(round((positionRover[0]+0.055)*10, 0)-4), int(round((positionRover[0]+.055)*10, 0)+5)):
-                            for y in range(int(math.ceil(positionRover[1]*10)-6), int(math.ceil(positionRover[1]*10)-1)):
+                            for y in range(int(math.ceil(positionRover[1]*10)-9), int(math.ceil(positionRover[1]*10)-1)):
                                 map[(x, y)] = "#"
                         return 2, map
                     elif(afstand[2] == "links"):
-                        for x in range(int(math.ceil(positionRover[0]*10)-6), int(math.ceil(positionRover[0]*10)-1)):
+                        for x in range(int(math.ceil(positionRover[0]*10)-9), int(math.ceil(positionRover[0]*10)-1)):
                             for y in range(int(round((positionRover[1]-0.07)*10, 0)-4), int(round((positionRover[1]-0.07)*10, 0)+5)):
                                 map[(x, y)] = "#"
                         return 2, map
                     elif(afstand[2] == "rechts"):
-                        for x in range(int(math.floor(positionRover[0]*10)+1), int(math.floor(positionRover[0]*10)+6)):
+                        for x in range(int(math.floor(positionRover[0]*10)+1), int(math.floor(positionRover[0]*10)+9)):
                             for y in range(int(round((positionRover[1]-0.06)*10, 0)-4), int(round((positionRover[1]-0.06)*10, 0)+5)):
                                 map[(x, y)] = "#"
                         return 2, map
 
 
-                elif (aan_het_rijden == False and distance > 20):
+                elif (aan_het_rijden == False and distance > 50):
                     if (afstand[2] == "vooruit"):
                         voorwaarts()
                         aan_het_rijden= True
@@ -661,7 +649,22 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             afstand_tot_volgende_punt = afstand[1]-positionRover[1]
                         elif(afstand[2] == "achteruit"):
                             afstand_tot_volgende_punt = positionRover[1]-afstand[1]
+                    
+                    
+                    
                     if(afstand_i != len(listofNextNodes)-1):
+                        y = 0
+                        x = 0
+                        y_array = [-4,-3,-2,-1,0,1,2,3,4]
+                        x_array = [-4,-3,-2,-1,0,1,2,3,4]
+                        if(afstand[2] == "vooruit"):
+                            y = 4
+                        elif(afstand[2] == "achteruit"):
+                            y = -4
+                        elif(afstand[2] == "links"):
+                            x = -4
+                        elif(afstand[2] == "rechts"):
+                            x = 4
                         if(listofNextNodes[afstand_i+1][2] == "links"):
                             
                             GPIO.output(21, True)
@@ -678,7 +681,14 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             distance = pulse_duration * 17900
                             distance = round(distance, 1)
                             
-                            map[(round((positionRover[0]+0.28-(distance/100))*10, 0), round((positionRover[1]-0.07)*10, 0))] = "#"
+                            if(distance < closest_distance):
+                                for y_element in y_array:
+                                    map[(int(round((positionRover[0]+0.28-(distance/100))*10, 0)), int(round((positionRover[1]-0.07)*10, 0)+y_element))] = "#"
+                                closest_distance = distance
+                            elif(distance > closest_distance +10):
+                                for x in range(int(math.ceil((positionRover[0]-0.28-(distance/100))*10)), int(math.ceil((positionRover[0])*10))):
+                                    map[(x, int(round((positionRover[1]-0.07)*10, 0)+y))] = "."
+
 
                         elif(listofNextNodes[afstand_i+1][2] == "rechts"):
                             
@@ -696,7 +706,14 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             distance = pulse_duration * 17900
                             distance = round(distance, 1)
                             
-                            map[(round((positionRover[0]-0.28+(distance/100))*10, 0), round((positionRover[1]-0.06)*10,0))] = "#"
+                            if(distance < closest_distance):
+                                for y_element in y_array:
+                                    map[(int(round((positionRover[0]-0.28+(distance/100))*10, 0)), int(round((positionRover[1]-0.06)*10,0)+y_element))] = "#"
+                                closest_distance = distance
+
+                            elif(distance > closest_distance +10):
+                                for x in range(int(math.floor((positionRover[0])*10)), int(math.floor((positionRover[0]+0.28+(distance/100))*10))):
+                                    map[(x, int(round((positionRover[1]-0.06)*10, 0)+y))] = "."
 
                         elif(listofNextNodes[afstand_i+1][2] == "vooruit"):
                             
@@ -714,7 +731,13 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             distance = pulse_duration * 17900
                             distance = round(distance, 1)
                             
-                            map[(round((positionRover[0]+0.035)*10, 0), round((positionRover[1]-0.295+(distance/100))*10,0))] = "#"
+                            if(distance < closest_distance):
+                                for x_element in x_array:
+                                    map[(int(round((positionRover[0]+0.035)*10, 0)+x_element), int(round((positionRover[1]-0.295+(distance/100))*10,0)))] = "#"
+                                closest_distance = distance
+                            elif(distance > closest_distance +10):
+                                for y in range(int(math.floor((positionRover[1])*10)), int(math.floor((positionRover[1]+0.295+(distance/100))*10))):
+                                    map[(int(round((positionRover[0]+0.035)*10, 0)+x), y)] = "."
                         
                         elif(listofNextNodes[afstand_i+1][2] == "achteruit"):
                             
@@ -732,13 +755,20 @@ def P2P_aster(listofNextNodes, positionRover, afstand_tot_einde, mapPositions, i
                             distance = pulse_duration * 17900
                             distance = round(distance, 1)
                             
-                            map[(round((positionRover[0]+0.055)*10, 0), round((positionRover[1]+0.295-(distance/100))*10,0))] = "#"
+                            if(distance < closest_distance):
+                                for x_element in x_array:
+                                    map[(int(round((positionRover[0]+0.055)*10, 0)+x_element), int(round((positionRover[1]+0.295-(distance/100))*10,0)))] = "#"
+                                closest_distance = distance
+                            elif(distance > closest_distance +10):
+                                for y in range(int(math.ceil((positionRover[1]-0.295-(distance/100))*10)), int(math.ceil((positionRover[1])*10))):
+                                    map[(int(round((positionRover[0]+0.035)*10, 0)+x), y)] = "."
+
 
                 print(time.time()-t5) 
                 i += 1
                 t0 = time.time()    
             
-            if(afstand_tot_volgende_punt <= 0.2):
+            if(afstand_tot_volgende_punt <= 0.20):
                 stop()
                 einde_punt_bereikt = True
                 if(afstand_tot_einde <= 0.16):
@@ -788,7 +818,6 @@ def bereken_path(path):
             
         
         if(element[0] == path[-1][0] and element[1] == path[-1][1]):
-            print("test")
             listofNextNodes[i] = (listofNextNodes[i][0]/10, listofNextNodes[i][1]/10, richting)
     
     print(listofNextNodes)
@@ -928,15 +957,15 @@ def rij_naar_volgende_punt(i_de_positie_in_map, mapPositions):
             start = (round(positionRover[0]*10, 0), round(positionRover[1]*10, 0))
             path = astar_search(map, start, end)
             listofNextNodes = bereken_path(path)
+            print(listofNextNodes)
+            stop()
+            sleep(2)
         elif(res == 1):
             positionRover = get_mm_position(positionRover)
             afstand_tot_einde = math.sqrt((mapPositions[i_de_positie_in_map][0]-positionRover[0])**2 + (mapPositions[i_de_positie_in_map][1]-positionRover[1])**2)
             stop()
             print("hello")
             break
-        
-
-
 
     print('op rust komen')
     sleep(5)
@@ -1074,10 +1103,6 @@ def main(coord_file, map_file, output_file):
             # Add chars to map
             for x in range(len(chars)):
                 map[(x, height)] = chars[x]
-                if(chars[x] == '@'):
-                    start = (x, height)
-                elif(chars[x] == '$'):
-                    end = (x, height)
 
             # Increase the height of the map
             if(len(chars) > 0):
@@ -1104,9 +1129,10 @@ def main(coord_file, map_file, output_file):
             
             elif (DRIVING_STATE == 1):
                 res, map = rij_naar_volgende_punt(i_de_positie_in_map, mapPositions)
-                DRIVING_STATE = 0
-                MEASURING_STATE = 1
-                atTheEnd = True
+                DRIVING_STATE = 1
+                MEASURING_STATE = 0
+                if (i_de_positie_in_map == len(mapPositions)-1):
+                    atTheEnd = True
                 print("DRIVING STATE STOP")
                 stop()
                 hedge.stop()
@@ -1129,6 +1155,7 @@ def main(coord_file, map_file, output_file):
         for y in range(0,84):
             for x in range(0,40):
                 string += map[(x, y)]
+                string += " "
                 if(x == 39):
                     string += "\n"
                     f.write(string)
@@ -1141,6 +1168,17 @@ def main(coord_file, map_file, output_file):
         stop()
         hedge.stop()
         print("You used ctrl+c")
+        f = open(output_file, "a")
+        string = ""
+        for y in range(0,84):
+            for x in range(0,40):
+                string += map[(x, y)]
+                string += " "
+                if(x == 39):
+                    string += "\n"
+                    f.write(string)
+            string = ""
+        f.close()      
         
 #######################################################
 ######                    MAIN                   ######
